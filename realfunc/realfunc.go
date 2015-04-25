@@ -1,4 +1,14 @@
+// The main reason this exists as a separate package is because importing "C"
+// will cause assembly code to use the OS-native s assembler instead of go's.
+// It also serves as a convenience to anyone else who wants public access to
+// Go's internal Func struct.
+
 package realfunc
+
+/*
+#include "realfunc.h"
+*/
+import "C"
 
 import (
 	"fmt"
@@ -7,58 +17,30 @@ import (
 	"unsafe"
 )
 
-// Func struct from runtime/runtime.h
-// See: https://docs.google.com/document/u/0/d/1lyPIbmsYbXnpNj57a261hgOYVpNRcgydurVQIyZOz_o/pub.
-//
-// TODO: This should just be a C struct so that we don't have to recopy the
-// data, however using cgo will cause go to use the OS-native assembler
-// instead of go's assembler.  Perhaps this could be isolated to its own
-// package to prevent that.
+// This is just a wrapper around the  C struct so that we don't have to
+// recopy the data
+// TODO: Keep reference to pclntab so we don't have to keep passing it in to
+// every method?
 type RealFunc struct {
-	entry   uintptr // start pc
-	nameoff int32   // function name
-
-	args  int32 // in/out arg size
-	frame int32 // legacy frame size; use pcsp if possible
-
-	pcsp   int32
-	pcfile int32
-	pcln   int32
-
-	npcdata   int32
-	nfuncdata int32
+	opaque struct{}
 }
 
-func (fn *RealFunc) Name() string {
-	return "LOL"
+func (fn *RealFunc) Raw() *C._func {
+	return (*C._func)(unsafe.Pointer(fn))
+}
+
+func (fn *RealFunc) Name(pclntab []byte) string {
+	return C.GoString((*C.char)(unsafe.Pointer(&pclntab[fn.Raw().nameoff])))
 }
 
 func (fn *RealFunc) Pcsp(pc uintptr, pclntab []byte) int32 {
 	// Decode the pcsp value from the pcltab for this pc.
-	return pcvalue(unsafe.Pointer(fn), fn.pcsp, pc, pclntab)
+	return pcvalue(unsafe.Pointer(fn), int32(fn.Raw().pcsp), pc, pclntab)
 }
 
 func RealFuncForPC(pc uintptr) *RealFunc {
-	// runtime.FuncForPC returns a pointer to the Func.
 	fn := unsafe.Pointer(runtime.FuncForPC(pc))
-	ptr := uintptr(fn) + unsafe.Sizeof(fn)
-
-	log.Printf("DEBUG: fn = %p, ptr = %x\n", fn, ptr)
-
-	return &RealFunc{
-		*(*uintptr)(fn),
-		*(*int32)(unsafe.Pointer(ptr)),
-
-		*(*int32)(unsafe.Pointer(ptr + 4)),
-		*(*int32)(unsafe.Pointer(ptr + 8)),
-
-		*(*int32)(unsafe.Pointer(ptr + 12)),
-		*(*int32)(unsafe.Pointer(ptr + 16)),
-		*(*int32)(unsafe.Pointer(ptr + 20)),
-
-		*(*int32)(unsafe.Pointer(ptr + 24)),
-		*(*int32)(unsafe.Pointer(ptr + 28)),
-	}
+	return (*RealFunc)(fn)
 }
 
 // offset is the offset to the desired pc-value table.

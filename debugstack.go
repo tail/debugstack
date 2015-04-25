@@ -238,6 +238,7 @@ func GetParamsLocalsForCaller(skip int) string {
 		log.Fatal(ok)
 	}
 	fn := realfunc.RealFuncForPC(pc)
+	pclntab := GetPclntab()
 
-	return fn.Name()
+	return fn.Name(pclntab)
 }

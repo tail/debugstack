@@ -15,6 +15,7 @@ func MyFunc(anArg int) {
 func AnotherFunc(arg1 int, arg2 int) int {
 	fmt.Printf("name 0: %s\n", debugstack.GetParamsLocalsForCaller(0))
 	fmt.Printf("name 1: %s\n", debugstack.GetParamsLocalsForCaller(1))
+	fmt.Printf("name 2: %s\n", debugstack.GetParamsLocalsForCaller(2))
 
 	pclntab := debugstack.GetPclntab()
 	fmt.Printf("FPForCaller(0) = 0x%x\n", debugstack.FPForCaller(pclntab, 0))
