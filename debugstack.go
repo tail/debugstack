@@ -51,11 +51,18 @@ func GetPclntab() []byte {
 	return pclndat
 }
 
+// TODO: Should this name be singular?
 type ParamsLocals struct {
-	name     string
-	location int32
-	kind     string
-	value    int // HACK: need to make this an interface{} later.
+	Name     string
+	Location int32
+	Kind     string
+	Value    int // HACK: need to make this an interface{} later.
+}
+
+func (pl *ParamsLocals) Print() {
+	fmt.Printf("name:  %s\n", pl.Name)
+	fmt.Printf("kind:  %s\n", pl.Kind)
+	fmt.Printf("value: %x\n", pl.Value)
 }
 
 func GetDwarfParamsLocals(funcname string) []*ParamsLocals {
@@ -104,7 +111,7 @@ outer:
 			if entryName != funcname {
 				dwarfReader.SkipChildren()
 			} else {
-				log.Printf("DEBUG DWARF: Field name = %s\n", entryName)
+				// log.Printf("DEBUG DWARF: Field name = %s\n", entryName)
 
 				// TODO: holy indentation
 				for {
@@ -123,7 +130,7 @@ outer:
 					if entry.Tag == dwarf.TagVariable || entry.Tag == dwarf.TagFormalParameter {
 						var location int32
 
-						fmt.Printf("  Child Entry: %#v\n", entry)
+						// fmt.Printf("  Child Entry: %#v\n", entry)
 
 						// TODO: error handling here is non-existant
 						locationRaw := entry.Val(dwarf.AttrLocation).([]byte)
@@ -146,8 +153,8 @@ outer:
 							location = DecodeSignedLEB128(locationRaw[2 : len(locationRaw)-1])
 						}
 
-						fmt.Printf("    AttrName = %s, location = %#d\n",
-							entry.Val(dwarf.AttrName).(string), location)
+						// fmt.Printf("    AttrName = %s, location = %#d\n",
+						// 	entry.Val(dwarf.AttrName).(string), location)
 
 						var kind string
 						if entry.Tag == dwarf.TagVariable {
@@ -229,10 +236,14 @@ func FPForCaller(pclntab []byte, skip int) uintptr {
 	return fp
 }
 
-// func GetParamsLocalsForCaller(skip int) []*ParamsLocals {
-func GetParamsLocalsForCaller(skip int) string {
+func GetParamsLocalsForCaller(skip int) []*ParamsLocals {
 	// Get function name
 	// TODO: This is duplicated in FPForCaller.
+	// caller(0) is _this_ function.  To behave like runtime.Caller, we just
+	// walk the stack one more than requested so this frame just becomes a
+	// black box.
+	skip += 1
+
 	pc, _, _, ok := runtime.Caller(skip)
 	if !ok {
 		log.Fatal(ok)
@@ -240,5 +251,14 @@ func GetParamsLocalsForCaller(skip int) string {
 	fn := realfunc.RealFuncForPC(pc)
 	pclntab := GetPclntab()
 
-	return fn.Name(pclntab)
+	paramsLocals := GetDwarfParamsLocals(fn.Name(pclntab))
+	fp := FPForCaller(pclntab, skip)
+
+	// Now that we have the frame pointer, we can assign the values to the
+	// ParamsLocals.
+	for _, paramLocal := range paramsLocals {
+		paramLocal.Value = *(*int)(unsafe.Pointer(fp + uintptr(paramLocal.Location)))
+	}
+
+	return paramsLocals
 }

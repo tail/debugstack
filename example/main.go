@@ -13,13 +13,22 @@ func MyFunc(anArg int) {
 }
 
 func AnotherFunc(arg1 int, arg2 int) int {
-	fmt.Printf("name 0: %s\n", debugstack.GetParamsLocalsForCaller(0))
-	fmt.Printf("name 1: %s\n", debugstack.GetParamsLocalsForCaller(1))
-	fmt.Printf("name 2: %s\n", debugstack.GetParamsLocalsForCaller(2))
+	var paramsLocals []*debugstack.ParamsLocals
+	var paramLocal *debugstack.ParamsLocals
 
-	pclntab := debugstack.GetPclntab()
-	fmt.Printf("FPForCaller(0) = 0x%x\n", debugstack.FPForCaller(pclntab, 0))
-	fmt.Printf("FPForCaller(1) = 0x%x\n", debugstack.FPForCaller(pclntab, 1))
+	fmt.Println("========== main.AnotherFunc ==========")
+	paramsLocals = debugstack.GetParamsLocalsForCaller(0)
+	for _, paramLocal = range paramsLocals {
+		paramLocal.Print()
+		fmt.Println()
+	}
+
+	fmt.Println("========== main.MyFunc ==========")
+	paramsLocals = debugstack.GetParamsLocalsForCaller(1)
+	for _, paramLocal = range paramsLocals {
+		paramLocal.Print()
+		fmt.Println()
+	}
 
 	return arg1 + arg2
 }

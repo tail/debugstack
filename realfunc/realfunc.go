@@ -11,7 +11,6 @@ package realfunc
 import "C"
 
 import (
-	"fmt"
 	"log"
 	"runtime"
 	"unsafe"
@@ -51,7 +50,7 @@ func pcvalue(f unsafe.Pointer, offset int32, targetpc uintptr, pclntable []byte)
 
 	entry := *(*uintptr)(unsafe.Pointer(f)) // Func.entry [0]
 	pc := entry
-	fmt.Printf("  pcvalue entry pc: %v %v\n", entry, pc)
+	// fmt.Printf("  pcvalue entry pc: %v %v\n", entry, pc)
 
 	encpctab := pclntable[offset:]
 	// fmt.Printf("  encoded pcvalue table: %#v [...]\n", encpctab[:32])
