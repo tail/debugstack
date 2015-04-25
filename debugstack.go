@@ -15,6 +15,7 @@ import (
 func GetStackPointer() uintptr
 
 // From https://bitbucket.org/sheran_gunasekera/leb128/
+// TODO: Rewrite this.
 func DecodeSignedLEB128(value []byte) int32 {
 	var result int32
 	var ctr uint
@@ -237,8 +238,10 @@ func FPForCaller(pclntab []byte, skip int) uintptr {
 }
 
 func GetParamsLocalsForCaller(skip int) []*ParamsLocals {
+	// TODO: A lot of this code is duplicated from FPForCaller.  Perhaps
+	// FPForCaller should just provide it?
+
 	// Get function name
-	// TODO: This is duplicated in FPForCaller.
 	// caller(0) is _this_ function.  To behave like runtime.Caller, we just
 	// walk the stack one more than requested so this frame just becomes a
 	// black box.
