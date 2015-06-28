@@ -6,4 +6,4 @@ debugstack
 TODO
 ----
 
-- [ ] Write a TODO list.
+- [x] Write a TODO list.

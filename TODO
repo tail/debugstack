@@ -1,0 +1,10 @@
+- core
+    - Other OS support.  Only linux ELF binaries supported ATM.
+    - Other architecture support.  Only AMD64 supported ATM.
+    - Create data structures for precalculating pcln/dwarf formats.
+        - This will allow doing all the heavy lifting at build time rather than runtime.
+    - Add tests
+
+- dwarf
+    - Figure out how to get the variable types
+    - Figure out if it's possible to get heap-allocated locals

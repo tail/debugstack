@@ -182,8 +182,8 @@ outer:
 // Returns the frame pointer for caller.  The skip argument is the number of
 // frames to descend, where 0 is the frame of the caller of this function.
 // TODO: Calling this function _may_ trigger resizing the stack which means
-// the addresses would change.  Does that mean you should always call this
-// function twice to be safe?
+// the addresses would change.  Need to find a way to mark this function as
+// "NOSPLIT" instead?  What if there's not enough stack space?
 // TODO: This could probably be optimized by only getting the pc for the
 // current caller and using the pcsp table alone to walk the stack.
 func FPForCaller(pclntab []byte, skip int) uintptr {
